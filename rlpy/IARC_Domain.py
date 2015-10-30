@@ -2,6 +2,11 @@ from __future__ import division
 import math
 import numpy
 
+
+# incomplete position based reward function: reward = (y+10)^2 - (5-x)^2 - (-5-x)^2
+# where x,y is the position of the roomba. Sum over all roombas to get total_reward and then normalize.
+
+
 class IARC_simulator():
     # Board Description:
     #
@@ -11,6 +16,7 @@ class IARC_simulator():
     # and moving "right / East" on the screen or board will indicate a positive X value
     
 	ROOMBA_SPEED = 0.33 # normal speed of the roomba (m/s)
+	ROOMBA_ANGULAR_SPEED = 1.5 # angular speed of the roomba (rad/s)
 	UAV_MAX_SPEED = 3 # maximum speed of UAV (m/s)
 	ROOMBA_COUNT = 10 # number of roombas
 	OBSTACLE_ROOMBA_COUNT = 4 # number of obstacle roombas
@@ -129,10 +135,10 @@ class IARC_simulator():
             # TODO
             walk()
     # TODO
-    def tap(self, roomba_index, tap_count)
+    def tap(self, roomba_index, tap_count):
         #update self.roombas[roomba_index]
-    
-     # TODO
+		return 0    
+    # TODO
     def walk(self, roomba_index, tap_count)
         #update self.roombas[roomba_index]
         
@@ -209,18 +215,22 @@ class Roomba():
 	'''
 		:param loc is list [x,y], for continuous X,Y within [-10,10]
 		:param vel is list [speed, direction] for direction is angle in radians
+		:param desired_delta is target_direction - current_direction going clockwise
 	'''
 	
 	def __init__(self, location, velocity):
 		self.x, self.y = location
 		self.speed, self.direction = velocity
+		self.desired_delta = 0
 
 	# setter functions
 	def set_loc(self, new_location):
 		self.x, self.y = new_location
     def set_vel(self, vel):
         self.speed, self.direction = vel
-    
+    def set_delta(self, delta):
+    	self.desired_delta = delta
+
     # getter functions
     def get_loc(self):
         return [self.x, self.y]
@@ -230,10 +240,18 @@ class Roomba():
         return self.y
     def get_vel(self):
         return [self.speed, self.direction]
+    def get_delta(self):
+    	return self.desired_delta
         
     def roomba_step(self, delta_time):
-        if self.speed == 0:
-            #TODO
+    	# roomba is turning; x and y not updated; direction updated
+        if self.desired_delta != 0:
+        	self.direction += ROOMBA_ANGULAR_SPEED*delta_time
+        	self.desired_delta -= ROOMBA_ANGULAR_SPEED*delta_time
+        	# if current direction is close enough to target direction, then we are there
+        	if abs(self.desired_delta) < ROOMBA_ANGULAR_SPEED*delta_time/2:
+        		self.desired_delta = 0
+        # roomba is not turning; x and y should be updated; direction not updated
         else:
     		delta_x = delta_time * speed * math.cos(self.direction)
     		delta_y = delta_time * speed * math.sin(self.direction)
@@ -267,4 +285,3 @@ class UAV():
 		delta_y = delta_time * speed * math.sin(self.direction)
 		self.x += delta_x
 		self_y += delta_y
-
