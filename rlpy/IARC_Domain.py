@@ -1,9 +1,8 @@
 from __future__ import division
 import math
 import numpy
+import random
 
-
-# incomplete position based reward function: reward = (y+10)^2 - (5-x)^2 - (-5-x)^2
 # where x,y is the position of the roomba. Sum over all roombas to get total_reward and then normalize.
 
 
@@ -61,7 +60,8 @@ class IARC_simulator():
 	        roomba_conf_name + time_name + roomba_speed_name
 		self.episodeCap = MAX_TIME/DELTA_TIME
 		
-		self.actions_num = ROOMBA_COUNT*MAX_TAP
+		# plus one for null action
+		self.actions_num = ROOMBA_COUNT*MAX_TAP + 1
 		
 		self.discount_factor = 0.9
 		
@@ -105,10 +105,22 @@ class IARC_simulator():
         return self.state_vec, self.isTerminal()
     
     def possibleActions(self):
-        # TODO
+        # Enumerating the action space:
+        #
+        # -1 --> Null Action
+        # The rest of the roomba_index and tap_count numbers will be encoded as follows:
+        #     One's digit -- number of taps [1,6]
+        #     Tens digit -- index of roomba
+        pa = [-1]
         
+        rIndex = 0
+        for roomba in self.roombas:
+            if roomba.isAlive():
+                for i in range(1,MAX_TAP+1):
+                    pa.append(rIndex*10+i)
+            rIndex +=1
+        return pa
         
-            
     def isTerminal(self):
         for roomba in self.roombas:
             if abs(roomba.get_x()) < GRID_SIZE/2 and abs(roomba.get_y()) < GRID_SIZE/2:
@@ -120,27 +132,104 @@ class IARC_simulator():
         # ACTION DEFINITION:
         #
         # Action a = [roomba_index, tap_count]
-        # where the roomba index is the index of a roomba in play,
+        # where the roomba index is the index of a roomba in play
         # and the number of taps is [1,6]
+        #
+        # If the roomba index equals -1, then the null action is taken
+        if action == -1:
+            roomba_index = -1
+            tap_count = 0
+        else:
+            roomba_index = int(action/10)
+            tap_count = action%10
+        
+        # Either tapping or not tapping a roomba
+        time_steps = 1
+        if not(roomba_index == -1):
+            roomba = self.roombas[roomba_index]
+            if numpy.linalg.norm(uav.get_location()-roomba.get_location) <= 0.05:
+                time_steps = self.tap(roomba_index, tap_count)
+            else:
+                self.walk(roomba_index, tap_count)
+        else:
+            # "Null action"
+            # Don't update the UAV location
+            self.updateRoombas()
+            
+        
+        # Reward function
+        REWARD = 0
+        
+        # New State
+        self.state_vec = self.external_state_struct.struct_to_vector()
+        
+        # Terminal
+        isTerminal = self.isTerminal()
+        
+        # Possible Actions
+        pa = self.possibleActions()
+        
+        
+    def tap(self, roomba_index, tap_count):
+        # Updates the roombas after "tapping" on the desired roomba
+        #
+        # Returns the number of time steps elapsed to tap roomba tap_count number of times
+        roomba = self.roombas[roombda_index]
+        delta = tap_count * (math.pi/4)
+        roomba.add_delta(delta)
+        time_steps = 0
+        while roomba.get_delta() != 0:
+            self.updateRoombas()
+            time_steps += 1
+        return time_steps
+        
+    def walk(self, roomba_index, tap_count)
+        # Updates all the roombas and UAV
+        self.updateRoombas()
+        self.uav.uav_step()
+        
+    
+    def updateRoombas(self):
+        # updates all the roomba objects with the following checks listed by priority:
+        #
+        # 1. Check whether the time is a modulus of 20 seconds. If so, update roombas 
+        #    desired_delta +180 and move one time step (rotate with desired angular velocity * DeltaTime)
+        # 2. Check whether the time is a modulus of 5 seconds. If so, update roombas
+        #    desired_delta -20<d<20 and move one time step
+        # 3. Go through all roombas. If the roomba has a non-zero desired_delta, then update angular direction,
+        #    else, update the position of the roomba to linear velocity * Delta_time
+        # [DEPRICATED] 4. Check to see if any roombas are out of bounds. If so, add that info to the internal structure
+        # 5. Calculates reward value for this roomba configuration
+        
         self.time += DELTA_TIME
         
-        #TODO (map action to [roomba_index, tap_count])
-        
-        roomba_index, tap_count = action
-        roomba = self.roombas[roomba_index]
-        if numpy.linalg.norm(uav.get_location()-roomba.get_location) <= 0.05:
-            # TODO
-            self.tap(roomba_index, tap_count)
+        # 1. Check whether the time is a modulus of 20 seconds. If so, update roombas 
+        #    desired_delta +180 and move one time step (rotate with desired angular velocity * DeltaTime)
+        if self.time%20 == 0:
+            # ASSUMPTION: this assumes all roombas in self.roombas are "in play"
+            for roomba in self.roombas:
+                if not(roomba.isActive):
+                    continue
+                roomba.add_delta(math.pi)
+                roomba.roomba_step()
+        # 2. Check whether the time is a modulus of 5 seconds. If so, update roombas
+        #    desired_delta -20<d<20 and move one time step
+        elif self.time%5 == 0:
+            for roomba in self.roombas:
+                if not(roomba.isActive):
+                    continue
+                noise = math.radians(random.randrange(-20,20))
+                roomba.add_delta(noise)
+                roomba.roomba_step()
+        # 3. Go through all roombas. If the roomba has a non-zero desired_delta, then update angular direction,
+        #    else, update the position of the roomba to linear velocity * Delta_time
         else:
-            # TODO
-            walk()
-    # TODO
-    def tap(self, roomba_index, tap_count):
-        #update self.roombas[roomba_index]
-		return 0    
-    # TODO
-    def walk(self, roomba_index, tap_count)
-        #update self.roombas[roomba_index]
+            for roomba in self.roombas:
+                if not(roomba.isActive):
+                    continue
+                roomba.roomba_step()
+        # 5. Calculates reward value for this roomba configuration
+        
         
 
 
@@ -222,6 +311,7 @@ class Roomba():
 		self.x, self.y = location
 		self.speed, self.direction = velocity
 		self.desired_delta = 0
+		self.isAlive = True
 
 	# setter functions
 	def set_loc(self, new_location):
@@ -230,6 +320,9 @@ class Roomba():
         self.speed, self.direction = vel
     def set_delta(self, delta):
     	self.desired_delta = delta
+    
+    def add_delta(self, delta):
+        self.desired_delta += delta
 
     # getter functions
     def get_loc(self):
@@ -246,6 +339,7 @@ class Roomba():
     def roomba_step(self, delta_time):
     	# roomba is turning; x and y not updated; direction updated
         if self.desired_delta != 0:
+            self.speed = 0
         	self.direction += ROOMBA_ANGULAR_SPEED*delta_time
         	self.desired_delta -= ROOMBA_ANGULAR_SPEED*delta_time
         	# if current direction is close enough to target direction, then we are there
@@ -253,10 +347,14 @@ class Roomba():
         		self.desired_delta = 0
         # roomba is not turning; x and y should be updated; direction not updated
         else:
+            self.speed = ROOMBA_SPEED
     		delta_x = delta_time * speed * math.cos(self.direction)
     		delta_y = delta_time * speed * math.sin(self.direction)
     		self.x += delta_x
     		self.y += delta_y
+    		if (self.x < -1*GRIDSIZE/2) or (self.y < -1*GRIDSIZE/2) or (self.x > GRIDSIZE/2) or (self.y > GRIDSIZE/2):
+    		    # Roomba is out of bounds
+                self.isActive = False
     		
 class UAV():
 	'''
