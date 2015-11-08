@@ -7,7 +7,7 @@ s0 = sim.s0()
 print s0[0]
 
 i = 0
-while i < 200:
-    reward = sim.step()[0]
-    print "Step "+i+" Reward: "+reward
+while i < 400:
+    reward = sim.step(-1)[0]
+    print "Step "+ str(i) +" Reward: " + str(reward)
     i += 1

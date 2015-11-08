@@ -161,11 +161,11 @@ class IARC_simulator():
 
         # Reward function
         REWARD = 0
-        for roomba in roombas:
+        for roomba in self.roombas:
             x = roomba.get_x()
             y= roomba.get_y()
             direction = roomba.get_vel()[1]
-            roomba_reward = ((y+10)**2 - (5-x)**2-(-5-x)**2)+(-1)**((t/10)%2)*cos(direction)
+            roomba_reward = ((y+10)**2 - (5-x)**2-(-5-x)**2)+(-1)**((self.time//10)%2)*math.cos(direction)
             REWARD += roomba_reward
         r = REWARD;
 
