@@ -65,6 +65,7 @@ class IARC_simulator():
         self.discount_factor = 0.9
 
         self.time = 0
+        self.timestep = 0
 
         self.roombas = [] #list of n roomba object
         self.uav = None
@@ -165,8 +166,11 @@ class IARC_simulator():
             x = roomba.get_x()
             y= roomba.get_y()
             direction = roomba.get_vel()[1]
-            roomba_reward = ((y+10)**2 - (5-x)**2-(-5-x)**2)+(-1)**((self.time//10)%2)*math.cos(direction)
+            #roomba_reward = ((y+10)**2 - (5-x)**2-(-5-x)**2)+100*(-1)**((self.time//10)%2)*math.cos(direction)
+            roomba_reward = ((y+10)**2 - (5-x)**2-(-5-x)**2)
+            #roomba_reward = (self.time//10)%2
             REWARD += roomba_reward
+            break
         r = REWARD;
 
 
@@ -211,26 +215,29 @@ class IARC_simulator():
         #    else, update the position of the roomba to linear velocity * Delta_time
         # [DEPRICATED] 4. Check to see if any roombas are out of bounds. If so, add that info to the internal structure
         # 5. Calculates reward value for this roomba configuration
-
         self.time += self.DELTA_TIME
+        self.timestep += 1
+        #print "Timestep = " + str(self.timestep)
 
         # 1. Check whether the time is a modulus of 20 seconds. If so, update roombas
         #    desired_delta +180 and move one time step (rotate with desired angular velocity * DeltaTime)
-        if self.time%20 == 0:
+        if self.timestep % 200 == 0: #replaced time with timesteps to avoid problems with mod not giving 0 when expected
             # ASSUMPTION: this assumes all roombas in self.roombas are "in play"
             for roomba in self.roombas:
                 if not(roomba.isAlive):
                     continue
                 roomba.add_delta(math.pi)
+                #print "Just added pi to delta"
                 roomba.roomba_step(self.DELTA_TIME)
         # 2. Check whether the time is a modulus of 5 seconds. If so, update roombas
         #    desired_delta -20<d<20 and move one time step
-        elif self.time%5 == 0:
+        elif self.timestep %50 == 0: #replaced time with timesteps to avoid problems with mod not giving 0 when expected
             for roomba in self.roombas:
                 if not(roomba.isAlive):
                     continue
                 noise = math.radians(random.randrange(-20,20))
                 roomba.add_delta(noise)
+                #print "just added noise"
                 roomba.roomba_step(self.DELTA_TIME)
         # 3. Go through all roombas. If the roomba has a non-zero desired_delta, then update angular direction,
         #    else, update the position of the roomba to linear velocity * Delta_time
