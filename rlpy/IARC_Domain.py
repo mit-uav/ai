@@ -358,11 +358,25 @@ class Roomba():
         # roomba is turning; x and y not updated; direction updated
         if self.desired_delta != 0:
             self.speed = 0
-            self.direction += ROOMBA_ANGULAR_SPEED*delta_time
-            self.desired_delta -= ROOMBA_ANGULAR_SPEED*delta_time
-            # if current direction is close enough to target direction, then we are there
-            if abs(self.desired_delta) < ROOMBA_ANGULAR_SPEED*delta_time/2:
-                self.desired_delta = 0
+            # turn in the direction of the desired delta at the appropriate angular speed
+            if self.desired_delta > 0:
+                self.direction += ROOMBA_ANGULAR_SPEED*delta_time
+                # if current direction is close enough to target direction, then we are there
+                if abs(self.desired_delta) < ROOMBA_ANGULAR_SPEED*delta_time:
+                    self.desired_delta = 0
+                else:
+                    # update desired_delta to reflect how much the roomba turned in the last step
+                    self.desired_delta -= ROOMBA_ANGULAR_SPEED*delta_time
+            else:
+                self.direction -= ROOMBA_ANGULAR_SPEED*delta_time
+                # if current direction is close enough to target direction, then we are there
+                if abs(self.desired_delta) < ROOMBA_ANGULAR_SPEED*delta_time:
+                    self.desired_delta = 0
+                    self.direction = 0
+                else:
+                    # update desired_delta to reflect how much the roomba turned in the last step
+                    self.desired_delta += ROOMBA_ANGULAR_SPEED*delta_time
+
         # roomba is not turning; x and y should be updated; direction not updated
         else:
             self.speed = ROOMBA_SPEED
