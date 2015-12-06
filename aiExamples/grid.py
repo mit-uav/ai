@@ -1,5 +1,6 @@
 import random
 import copy
+import numpy
 
 DIMX = 7
 DIMY = 7
@@ -40,59 +41,80 @@ class Agent:
 
 	def __init__(self, learnMeth = "SARSA"):
 		# Misc
+		self.weights = [0 for i in range(4)]
+		self.features = [0 for i in range(4)]
+		# features = [X-coord, Y-coord, Dist_to_target]
 		self.time = 0
 		self.W = 0
 		self.L = 0
 		self.epsilon = .3
-		self.alpha = 0.1
+		self.alpha = 0.05
 		self.gamma = 0.9
 		self.learnMethod = learnMeth
 
 		# Initialize Q Values to 0
-		self.qValues = []
-		for i in range(DIMY):
-			q = []
-			for j in range(DIMX):
-				q.append([0,0,0,0])
-			self.qValues.append(q)
+# 		self.qValues = []
+# 		for i in range(DIMY):
+# 			q = []
+# 			for j in range(DIMX):
+# 				q.append([0,0,0,0])
+# 			self.qValues.append(q)
 
 		# Go to starting state
 		self.state = []
 		self.prevState = None
 		self.nextAction = None
+		self.prevQ = 0
 		self.s0()
 
 	def s0(self):
 		self.state = [0,0]
 		self.nextAction = self.chooseAction()
+		features[0] = self.state[0]
+        features[1] = self.state[1]
+        features [2] = self.distToTarget()
 
 	def step(self):
 		self.time += 1
 		self.prevState = copy.copy(self.state)
+		self.prevQ = self.getQ()
 		action = copy.copy(self.nextAction)
 
 		# Update Domain and Agent State
-		if action == 1:
+		if action == 1: #UP
 			self.state[1] = self.prevState[1] - 1
-		elif action == 2:
+		elif action == 2: #DOWN
 			self.state[1] = self.prevState[1] + 1
-		elif action == 3:
+		elif action == 3: #LEFT
 			self.state[0] = self.prevState[0] - 1
-		elif action == 4:
+		elif action == 4: #RIGHT
 			self.state[0] = self.prevState[0] + 1
 
 		r = reward(self.state)
 		self.nextAction = self.chooseAction()
 
+        # Update the features vector:
+        self.update
+        features[0] = self.state[0]
+        features[1] = self.state[1]
+        features [2] = self.distToTarget()
+        features[3] = self.
+
+
 		# Learning Methods
 		if self.learnMethod == "SARSA":
-			# SARSA 
+			# SARSA
 			self.learnSARSA(self.prevState, action, r, self.state, self.nextAction)
-		elif self.learnMethod == "Q":
-			# Q-Learning
-			maxQ = self.maxQ(self.state)
-			self.learnQ(self.prevState, action, r, maxQ)
 
+            
+		elif self.learnMethod == "Q":
+		    
+			# Q-Learning
+			# Tabular method:
+# 			maxQ = self.maxQ(self.state)
+# 			self.learnQ(self.prevState, action, r, maxQ)
+
+            
 		# Check if the state is terminal
 		if isTerminal(self.state):
 			spot = External_State_Structure[self.state[1]][self.state[0]]
@@ -106,16 +128,22 @@ class Agent:
 			self.nextAction = self.chooseAction()
 
 	def learnSARSA(self, prevState, prevAction, reward, state, nextAction):
-		self.qValues[prevState[1]][prevState[0]][prevAction-1] += self.alpha*(reward+self.gamma*self.getQ(state,nextAction)-self.getQ(prevState,prevAction))
-
-	def learnQ(self, prevState, prevAction, reward, maxQ):
-		self.qValues[prevState[1]][prevState[0]][prevAction-1] += self.alpha*(reward+self.gamma*maxQ-self.getQ(prevState,prevAction))
+# 		self.qValues[prevState[1]][prevState[0]][prevAction-1] += self.alpha*(reward+self.gamma*self.getQ(state,nextAction)-self.getQ(prevState,prevAction))
+        delta = reward + self.gamma*(self.getQ(state, nextAction)) - self.getQ(prevState, prevAction)
+        for i in range(self.weights):
+            self.weights[i] += self.alpha*delta*self.features[i]
+        
+        
+# 	def learnQ(self, prevState, prevAction, reward, maxQ):
+# 		self.qValues[prevState[1]][prevState[0]][prevAction-1] += self.alpha*(reward+self.gamma*maxQ-self.getQ(prevState,prevAction))
 
 	def getQ(self, state, action):
-		return self.qValues[state[1]][state[0]][action-1]
+# 		return self.qValues[state[1]][state[0]][action-1]
+        return numpy.dot(self.weights, [state[0],state[1],self.distToTarget(state[0],state[1]),action])
+        
 
-	def maxQ(self, state):
-		return max([self.getQ(state, a) for a in self.possibleActions()])
+# 	def maxQ(self, state):
+# 		return max([self.getQ(state, a) for a in self.possibleActions()])
 
 	def possibleActions(self):
 		# 1 == UP
@@ -143,7 +171,7 @@ class Agent:
 		return actions
 
 	def chooseAction(self):
-		action = 0
+		action = 0 
 		pa = self.possibleActions()
 		if random.random() < self.epsilon:
 			a = random.choice(pa)
@@ -159,6 +187,14 @@ class Agent:
 			a = pa[i]
 		return a
 
+    def distToTarget(self , ax, ay):
+        target = [0,0]
+        for y in range(DIMY):
+            for x in range(DIMX):
+                if External_State_Structure[y][x] == "1":
+                    target = [x,y]
+        return math.hypot(ax-x, ay-y)
+
 	def printqValues(self):
 		for row in range(len(self.qValues)):
 			print self.qValues[row]
@@ -169,6 +205,7 @@ class Agent:
 
 	def setEpison(self, ep):
 		self.epsilon = ep
+
 
 
 MAX_STEPS = 10000
