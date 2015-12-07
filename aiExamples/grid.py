@@ -100,11 +100,7 @@ class Agent:
 		r = reward(self.state)
 		self.nextAction = self.chooseAction()
 
-		# Update the features vector:
-		self.features[0] = self.state[0]
-		self.features[1] = self.state[1]
-		self.features [2] = self.distToTarget(self.state[0], self.state[1])
-		self.features[3] = self.nextAction 
+		
 		# Learning Methods
 		if self.learnMethod == "SARSA":
 			# SARSA
@@ -116,6 +112,12 @@ class Agent:
 			# Tabular method:
 # 			maxQ = self.maxQ(self.state)
 # 			self.learnQ(self.prevState, action, r, maxQ)
+
+		# Update the features vector:
+		self.features[0] = self.state[0]
+		self.features[1] = self.state[1]
+		self.features [2] = self.distToTarget(self.state[0], self.state[1])
+		self.features[3] = self.nextAction 
 
 		# Check if the state is terminal
 		if isTerminal(self.state, self.time):
