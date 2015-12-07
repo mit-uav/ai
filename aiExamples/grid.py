@@ -1,6 +1,7 @@
 import random
 import copy
 import numpy
+import math
 
 DIMX = 7
 DIMY = 7
@@ -28,7 +29,7 @@ def reward(state):
 		reward = -1
 	return reward
 
-def isTerminal(state):
+def isTerminal(state, time):
 	r = state[1]
 	c = state[0]
 
@@ -36,12 +37,15 @@ def isTerminal(state):
 	if spot == '2' or spot == '1':
 		return True
 
+	if time > 100:
+		return True
+
 class Agent:
 
 
 	def __init__(self, learnMeth = "SARSA"):
 		# Misc
-		self.weights = [0 for i in range(4)]
+		self.weights = [random.random() for i in range(4)]
 		self.features = [0 for i in range(4)]
 		# features = [X-coord, Y-coord, Dist_to_target]
 		self.time = 0
@@ -69,16 +73,19 @@ class Agent:
 
 	def s0(self):
 		self.state = [0,0]
+		self.time = 0
 		self.nextAction = self.chooseAction()
-		features[0] = self.state[0]
-        features[1] = self.state[1]
-        features [2] = self.distToTarget()
+		self.features[0] = self.state[0]
+		self.features[1] = self.state[1]
+		self.features [2] = self.distToTarget(self.state[0], self.state[1])
+		self.features[3] = self.nextAction
 
 	def step(self):
 		self.time += 1
 		self.prevState = copy.copy(self.state)
-		self.prevQ = self.getQ()
 		action = copy.copy(self.nextAction)
+		self.prevQ = self.getQ(self.prevState, action)
+		
 
 		# Update Domain and Agent State
 		if action == 1: #UP
@@ -93,55 +100,45 @@ class Agent:
 		r = reward(self.state)
 		self.nextAction = self.chooseAction()
 
-        # Update the features vector:
-        self.update
-        features[0] = self.state[0]
-        features[1] = self.state[1]
-        features [2] = self.distToTarget()
-        features[3] = self.
-
-
+		# Update the features vector:
+		self.features[0] = self.state[0]
+		self.features[1] = self.state[1]
+		self.features [2] = self.distToTarget(self.state[0], self.state[1])
+		self.features[3] = self.nextAction 
 		# Learning Methods
 		if self.learnMethod == "SARSA":
 			# SARSA
-			self.learnSARSA(self.prevState, action, r, self.state, self.nextAction)
+			self.learnSARSA(self.prevQ, r, self.state, self.nextAction)
 
-            
 		elif self.learnMethod == "Q":
-		    
+			quit()
 			# Q-Learning
 			# Tabular method:
 # 			maxQ = self.maxQ(self.state)
 # 			self.learnQ(self.prevState, action, r, maxQ)
 
-            
 		# Check if the state is terminal
-		if isTerminal(self.state):
+		if isTerminal(self.state, self.time):
 			spot = External_State_Structure[self.state[1]][self.state[0]]
-			if spot == '2':
-				self.L += 1
-				# print "Death"
-			elif spot == '1':
+			if spot == '1':
 				self.W += 1
-				# print "Win"
+			else:
+				self.L += 1
 			self.s0()
-			self.nextAction = self.chooseAction()
 
-	def learnSARSA(self, prevState, prevAction, reward, state, nextAction):
-# 		self.qValues[prevState[1]][prevState[0]][prevAction-1] += self.alpha*(reward+self.gamma*self.getQ(state,nextAction)-self.getQ(prevState,prevAction))
-        delta = reward + self.gamma*(self.getQ(state, nextAction)) - self.getQ(prevState, prevAction)
-        for i in range(self.weights):
-            self.weights[i] += self.alpha*delta*self.features[i]
-        
-        
+	def learnSARSA(self, prevQ, reward, state, nextAction):
+		# self.qValues[prevState[1]][prevState[0]][prevAction-1] += self.alpha*(reward+self.gamma*self.getQ(state,nextAction)-self.getQ(prevState,prevAction))
+		delta = reward + self.gamma*(self.getQ(state, nextAction)) - prevQ
+		for i in range(len(self.weights)):
+			self.weights[i] += self.alpha*delta*self.features[i]
+
 # 	def learnQ(self, prevState, prevAction, reward, maxQ):
 # 		self.qValues[prevState[1]][prevState[0]][prevAction-1] += self.alpha*(reward+self.gamma*maxQ-self.getQ(prevState,prevAction))
 
 	def getQ(self, state, action):
 # 		return self.qValues[state[1]][state[0]][action-1]
-        return numpy.dot(self.weights, [state[0],state[1],self.distToTarget(state[0],state[1]),action])
-        
-
+		return numpy.dot(self.weights, [state[0],state[1],self.distToTarget(state[0],state[1]),action])
+		
 # 	def maxQ(self, state):
 # 		return max([self.getQ(state, a) for a in self.possibleActions()])
 
@@ -152,14 +149,6 @@ class Agent:
 		# 4 == RIGHT
 
 		actions = []
-		# if not(self.state[0] == 0):
-		# 	actions.append(1)
-		# if not(self.state[0] == DIMY-1):
-		# 	actions.append(2)
-		# if not(self.state[1] == 0):
-		# 	actions.append(3)
-		# if not(self.state[1] == DIMX-1):
-		# 	actions.append(4)
 		if not(self.state[1] == 0):
 			actions.append(1) # UP
 		if not(self.state[1] == DIMY-1):
@@ -187,18 +176,22 @@ class Agent:
 			a = pa[i]
 		return a
 
-    def distToTarget(self , ax, ay):
-        target = [0,0]
-        for y in range(DIMY):
-            for x in range(DIMX):
-                if External_State_Structure[y][x] == "1":
-                    target = [x,y]
-        return math.hypot(ax-x, ay-y)
+	def distToTarget(self , ax, ay):
+		target = [0,0]
+		for y in range(DIMY):
+			for x in range(DIMX):
+				if External_State_Structure[y][x] == "1":
+					target = [x,y]
+		return math.hypot(ax-x, ay-y)
 
 	def printqValues(self):
 		for row in range(len(self.qValues)):
 			print self.qValues[row]
-				
+		
+	def printWeightValues(self):
+		for i in range(len(self.weights)):
+			print "W" + str(i) + ":  " + str(self.weights[i])
+
 	def clearWins(self):
 		self.W = 0
 		self.L = 0
@@ -210,22 +203,22 @@ class Agent:
 
 MAX_STEPS = 10000
 DISP_STEPS = MAX_STEPS/10
-a = Agent("Q")
-Epsilon = 0.3
-print "Q-Learning:"
-for timestep in range(MAX_STEPS):
-	a.step()
-	if timestep%DISP_STEPS == 0:
-		Epsilon = Epsilon/2
-		a.setEpison(Epsilon)
-		print "Timestep: " + str(timestep)
-		print "W: " + str(a.W) + "    L: " + str(a.L)
-		a.clearWins()
+# a = Agent("Q")
+# Epsilon = 0.3
+# print "Q-Learning:"
+# for timestep in range(MAX_STEPS):
+# 	a.step()
+# 	if timestep%DISP_STEPS == 0:
+# 		Epsilon = Epsilon/2
+# 		a.setEpison(Epsilon)
+# 		print "Timestep: " + str(timestep)
+# 		print "W: " + str(a.W) + "    L: " + str(a.L)
+# 		a.clearWins()
 
-print "Timestep: " + str(timestep)
-print "W: " + str(a.W) + "    L: " + str(a.L)
-print a.printqValues()
-print "\n"
+# print "Timestep: " + str(timestep)
+# print "W: " + str(a.W) + "    L: " + str(a.L)
+# print a.printqValues()
+# print "\n"
 
 a = Agent("SARSA")
 Epsilon = 0.3
@@ -241,7 +234,7 @@ for timestep in range(MAX_STEPS):
 
 print "Timestep: " + str(timestep)
 print "W: " + str(a.W) + "    L: " + str(a.L)
-print a.printqValues()
+print a.printWeightValues()
 
 
 
