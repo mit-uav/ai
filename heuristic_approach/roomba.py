@@ -10,18 +10,18 @@ class Roomba(object):
         self.radius = roomba_cfg['rad']
         self.speed = roomba_cfg['speed']
         
-    def step(self, board_time):
-        if 
+    # INPUT: time - time since game started in miliseconds
+    #        time_step - the amount of time between this and next time steps
+    # OUTPUT: an action {null, angular movement, or displacement} the roomba wants to take
+    def act(self, time, time_step):
+        # Every 20 seconds turn 180 degrees
+
+        # Every 5 seconds (except the 180 turns) noise +/- 20 degrees
+
+        # Else move straight at velocity m/s
+
         
     def tapped(self):
-        pass
+        
     
-    def could_die_in_next(self, delta_t):
-        # uses direction of roomba and speed and returns 
-        # wether the roomba could leave the board in delta_t miliseconds
-        # *** Uses just a straight line approximation of where the roomba is moving
-        travel_radius = self.speed*(1000/delta_t)
-        outVec = Vector(travel_radius*math.cos(self.angle), travel_radius*math.sin(self.angle)
-        if outVec.x + self.pos.x > 10 or outVec.x + self.pos.x < -10 or outVec.y + self.pos.y > 10 or outVec.y + self.pos.y < -10:
-            # The roomba could go out of bounds
-            return True
+    
