@@ -24,3 +24,15 @@ class Strategy(object):
     def distance_between(obj1, obj2):
         hpt = Math.hypot(obj1.pos.x-obj2.pos.x, obj1.pos.y-obj2.pos.y)
         return hpt - obj1.rad - obj2.rad
+
+    def could_die_in_next(self, roomba, delta_t):
+        # uses direction of roomba and speed and returns 
+        # wether the roomba could leave the board in delta_t miliseconds
+        # *** Uses just a straight line approximation of where the roomba is moving
+        travel_radius = ROOMBA_CONFIG['speed']*(1000/delta_t)
+        outVec = Vector(travel_radius*math.cos(roomba.angle), travel_radius*math.sin(roomba.angle)
+        if outVec.x + roomba.pos.x > 10 or outVec.x + roomba.pos.x < -10 or outVec.y + roomba.pos.y > 10 or outVec.y + roomba.pos.y < -10:
+            # The roomba could go out of bounds
+            return True
+        else:
+            return False
