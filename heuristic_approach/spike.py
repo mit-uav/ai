@@ -10,5 +10,12 @@ class Spike(object):
         self.radius = spike_cfg['rad']
         self.speed = spike_cfg['speed']
 
-    def step(self):
-        # TODO
+    # INPUT: time_steps - the amount of time between this and next time steps
+    # OUTPUT: action {null or displacement}
+    def step(self, time_step):
+        # Move in a circle clockwise direction
+        # Approximate as a very high polygon shape with time_steps guiding the displacement vector
+
+        # Stop when in a collision with roomba
+
+        # Else move
