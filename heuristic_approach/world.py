@@ -10,6 +10,7 @@ class World(object):
         self.uav = UAV(uav_cfg)
         
         # make n roombas in a circle
+        
         self.roombas = []
         for i in range(roomba_cfg.n):
             theta = i * (2*math.pi / roomba_cfg.n);
@@ -50,4 +51,3 @@ class World(object):
         self.t += self.time_step
         
         return True # True if the simulation is not over
-    

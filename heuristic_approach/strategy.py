@@ -1,38 +1,46 @@
-class Strategy(object):
-    
-    def __init__(self):
-        pass
-    
-    def act(self, state):
-        pass
-    
-    def flip_roomba(self, state):
-        if state['time']%(20*1000) < 10*1000:
-            # In first 10 seconds of the 20 second roomba interval
-            for roomba in state['roombas']:
-                if distance_between(roomba, state['uav']) <= 0:
-                    roomba.tapped()
-                    #break
-        else:
-            # In second 10 seconds of the 20 second roomba interval
-            # If the roomba will die by the next 180 turn, it is flipped
-            for roomba in state['roombas']:
-                if distance_between(roomba, state['uav']) <= 0:
-                    if roomba.could_die_in_next(20*1000 - state['time']%20*1000):
-                        roomba.tapped()
-                
-    def distance_between(obj1, obj2):
-        hpt = Math.hypot(obj1.pos.x-obj2.pos.x, obj1.pos.y-obj2.pos.y)
-        return hpt - obj1.rad - obj2.rad
+# example of particular strategy classes
+from FollowOneRoomba import *
+from DefensiveU import *
+from TopOffensive import *
+import random
 
-    def could_die_in_next(self, roomba, delta_t):
-        # uses direction of roomba and speed and returns 
-        # wether the roomba could leave the board in delta_t miliseconds
-        # *** Uses just a straight line approximation of where the roomba is moving
-        travel_radius = ROOMBA_CONFIG['speed']*(1000/delta_t)
-        outVec = Vector(travel_radius*math.cos(roomba.angle), travel_radius*math.sin(roomba.angle)
-        if outVec.x + roomba.pos.x > 10 or outVec.x + roomba.pos.x < -10 or outVec.y + roomba.pos.y > 10 or outVec.y + roomba.pos.y < -10:
-            # The roomba could go out of bounds
-            return True
-        else:
-            return False
+class Strategy:
+    def __init__(self):
+        self.current_strategy = 0
+        self.all_strategies = []
+        self.initialize_strategies()
+        self.history = [] # list of previous strategies taken
+        self.time_in_current_strategy = 0
+        
+    def initialize_strategies(self):
+        follow_one_roomba = FollowOneRoomba()
+        defensive_U = DefensiveU()
+        top_offensive = TopOffensive()
+        self.all_strategies = [follow_one_roomba, defensive_U, top_offensive]
+        # 0 - follow one roomba
+        # 1 - defensive U
+        # 2 - top offensive
+        
+    def act(self, full_state):
+        self.actions_in_current_strategy -= 1
+        if self.actions_in_current_strategy <= 0:
+            self.transition(full_state)
+        action = self.all_strategies[self.current_strategy].act(full_state)
+        return action
+        
+    def transition(self, full_state):
+        # logic to transition from current stategy
+        self.history.append(self.current_strategy)
+        self.current_strategy = random.choice(range(len(self.all_strategies)))
+        
+        # Transition every 10 seconds
+        self.actions_in_current_strategy = 10000
+        
+        
+class FollowOneRoomba:
+    def __init__(self):
+        
+    def act(self, full_state):
+        return (x,y,z)
+        
+    

@@ -61,3 +61,5 @@ class Main(object):
         while keep_going:
             time.sleep(1000./self.sim_res)
             keep_going = self.step_once()
+
+ 
