@@ -8,37 +8,42 @@ full_state = {
 UAVPrototype = class{
 	
 	def __init__(self, x, y, z):
-		setPos(x,y,z)
-		setVel(0,0,0)
+		self.position = Vector(x,y,z)
+		self.velocity = Vector(0,0,0)
 
-	def setPos(self, x, y, z):
-		self.x = x
-		self.y = y
-		self.z = z
+	def set_position(self, x, y, z):
+		self.pos.x = x
+		self.pos.y = y
+		self.pos.z = z
 
-	def setVel(self, x, y, z):
-		self.xVel = 0
-		self.yVel = 0
-		self.zVel = 0
+
+	def set_velocity(self, x, y, z):
+		self.velocity.x = x
+		self.velocity.y = y
+		self.velocity.z = z
 }
 
 RoombaPrototype = class{
 	
 	def __init__(self, x, y, z, theta):
-		setPos(x,y,z)
+		self.position = Vector(x,y,z)
 		self.angle = theta
 		self.is_moving = false
+		self.confidence = 1
 
-	def setPos(self, x, y, z):
-		self.x = x
-		self.y = y
-		self.z = z
+	def set_position(self, x, y, z):
+		self.position.x = x
+		self.position.y = y
+		self.position.z = z
 
-	def setAngle(self, angle):
+	def set_angle(self, angle):
 		self.angle = angle
 
-	def setMoving(self, moving):
+	def set_moving(self, moving):
 		self.is_moving = moving
+
+	def set_confidence(self, c):
+		self.confidence = c
 }
 
 SpikePrototype = class{
@@ -47,15 +52,20 @@ SpikePrototype = class{
 		setPos(x,y,z)
 		self.angle = theta
 		self.is_moving = false
+		self.confidence = 1
 
-	def setPos(self, x, y, z):
-		self.x = x
-		self.y = y
-		self.z = z
+	def set_position(self, x, y, z):
+		self.position.x = x
+		self.position.y = y
+		self.position.z = z
 
-	def setAngle(self, angle):
+	def set_angle(self, angle):
 		self.angle = angle
 
-	def setMoving(self, moving):
+	def set_moving(self, moving):
 		self.is_moving = moving
+
+	def set_confidence(self, c):
+		self.confidence = c
+}
 }
