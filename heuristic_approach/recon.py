@@ -1,3 +1,4 @@
+from __future__ import division
 import math
 import random
 import os
@@ -53,8 +54,8 @@ if __name__ == "__main__":
 		rad = 5
 		numPoints = 40
 		for i in range(numPoints):
-			ss.append((rad*math.sin(2*math.PI*(i/numPoints)),rad*math.cos(2*math.PI*(i/40)),2+math.sin(i*math.PI/8)))
-		uav UAVControl(ss)
+			ss.append((rad*math.sin(2*math.pi*(i/numPoints)),rad*math.cos(2*math.pi*(i/40)),2+math.sin(i*math.pi/8)))
+		uav = UAVControl(ss)
 		rospy.spin()
 	except rospy.ROSInterruptException:
 		pass
